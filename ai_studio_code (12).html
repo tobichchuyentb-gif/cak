@@ -1,0 +1,1900 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Maze Tank Battle (Tank Trouble Style) - Fully Restored & Fixed</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body {
+      background-color: #1a1a1a;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #fff;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+    }
+    #game-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      max-width: 900px;
+      max-height: 950px;
+      padding: 10px;
+    }
+
+    /* SCREENS */
+    .screen {
+      position: absolute;
+      background: rgba(30, 30, 30, 0.95);
+      border: 3px solid #444;
+      border-radius: 12px;
+      padding: 30px;
+      width: 90%;
+      max-width: 450px;
+      text-align: center;
+      z-index: 10;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #00ffcc;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #555;
+      background: #2b2b2b;
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+    }
+    button {
+      background: #00ffcc;
+      color: #111;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #00cca3;
+    }
+    #lobby-screen ul {
+      list-style: none;
+      text-align: left;
+      margin: 15px 0;
+      max-height: 150px;
+      overflow-y: auto;
+      background: #222;
+      padding: 10px;
+      border-radius: 6px;
+    }
+    #lobby-screen li {
+      padding: 6px;
+      border-bottom: 1px solid #333;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* HUD */
+    #hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 5px;
+      padding: 0 5px;
+      font-size: 16px;
+    }
+    #timer {
+      font-weight: bold;
+      color: #ff5555;
+    }
+
+    /* CANVAS AREA */
+    #canvas-wrapper {
+      position: relative;
+      background-color: #333;
+      border: 12px solid #444;
+      border-radius: 4px;
+      width: 100%;
+      aspect-ratio: 1/1;
+      max-width: 600px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background-color: #e5e5e5;
+    }
+
+    /* BOTTOM SCORES PANEL */
+    #scores-panel {
+      width: 100%;
+      max-width: 600px;
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      background: rgba(0,0,0,0.3);
+      padding: 8px;
+      border-radius: 8px;
+    }
+    .score-card {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .mini-tank-icon {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid #000;
+    }
+
+    /* GIAO DIỆN KHUNG CHAT PHÍA DƯỚI BÊN PHẢI */
+    #chat-wrapper {
+      position: absolute;
+      bottom: 75px;
+      right: 15px;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    #btn-chat-toggle {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      background: #00ffcc;
+      color: #111;
+      font-size: 20px;
+      border: 2px solid #222;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    #chat-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 12px;
+      height: 12px;
+      background: #ff3300;
+      border-radius: 50%;
+      border: 2px solid #fff;
+    }
+    #chat-box {
+      width: 280px;
+      height: 220px;
+      background: rgba(20, 20, 20, 0.95);
+      border: 2px solid #444;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    #chat-messages {
+      flex: 1;
+      padding: 8px;
+      overflow-y: auto;
+      font-size: 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .chat-msg {
+      word-break: break-word;
+      line-height: 1.4;
+    }
+    .chat-sender {
+      font-weight: bold;
+    }
+    #chat-input-area {
+      display: flex;
+      border-top: 1px solid #333;
+      background: #2b2b2b;
+    }
+    #chat-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: #fff;
+      padding: 8px;
+      font-size: 13px;
+      margin: 0;
+      border-radius: 0;
+    }
+    #btn-chat-send {
+      width: 60px;
+      background: #00ffcc;
+      color: #111;
+      border: none;
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+      padding: 0;
+      margin: 0;
+      border-radius: 0;
+    }
+
+    /* HIDE CLASS */
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game-container">
+    <!-- 1. MÀN HÌNH CHÍNH (MAIN MENU) -->
+    <div id="main-screen" class="screen">
+      <h1>TANK MAZE ONLINE</h1>
+      <input type="text" id="username-input" placeholder="Nhập tên của bạn..." maxlength="12">
+      <input type="text" id="room-input" placeholder="Mã phòng (để trống nếu tạo mới)">
+      <button id="btn-join">Vào / Tạo Phòng</button>
+    </div>
+
+    <!-- 2. PHÒNG CHỜ (LOBBY) -->
+    <div id="lobby-screen" class="screen hidden">
+      <h1>PHÒNG CHỜ</h1>
+      <p id="lobby-room-code" style="color: #00ffcc; font-weight: bold; margin-bottom: 10px;"></p>
+      
+      <div id="host-settings" class="hidden">
+        <label for="time-limit-select">Thời gian trận đấu:</label>
+        <select id="time-limit-select">
+          <option value="180">3 Phút</option>
+          <option value="300" selected>5 Phút</option>
+          <option value="600">10 Phút</option>
+        </select>
+      </div>
+
+      <p style="margin-top: 10px; font-weight: bold;">Người chơi trong phòng:</p>
+      <ul id="player-list-ul"></ul>
+      <button id="btn-start" class="hidden">Bắt Đầu Trận Đấu</button>
+      <p id="wait-host-msg" style="font-style: italic; color: #aaa; margin-top: 10px;">Đang chờ chủ phòng bắt đầu...</p>
+    </div>
+
+    <!-- 3. KẾT THÚC (GAME OVER/LEADERBOARD) -->
+    <div id="gameover-screen" class="screen hidden">
+      <h1>KẾT THÚC TRẬN</h1>
+      <div id="leaderboard-list"></div>
+      <button id="btn-rematch">Chơi lại (Về phòng chờ)</button>
+    </div>
+
+    <!-- 4. GIAO DIỆN TRẬN ĐẤU (HUD & CANVAS) -->
+    <div id="game-hud-wrapper" class="hidden" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+      <div id="hud">
+        <div id="room-display">Phòng: <span id="hud-room-id" style="color: #00ffcc;">-</span></div>
+        <div id="timer">00:00</div>
+      </div>
+
+      <div id="canvas-wrapper">
+        <canvas id="gameCanvas" width="800" height="800"></canvas>
+      </div>
+
+      <!-- Dàn điểm số bên dưới bản đồ -->
+      <div id="scores-panel"></div>
+    </div>
+
+    <!-- KHUNG CHAT REALTIME -->
+    <div id="chat-wrapper" class="hidden">
+      <div id="chat-box" class="hidden">
+        <div id="chat-messages"></div>
+        <div id="chat-input-area">
+          <input type="text" id="chat-input" placeholder="Nhập tin nhắn..." maxlength="200">
+          <button id="btn-chat-send">Gửi</button>
+        </div>
+      </div>
+      <button id="btn-chat-toggle">
+        💬 <span id="chat-badge" class="hidden"></span>
+      </button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue, update, push, remove, onDisconnect, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // -----------------------------------------------------------------
+    // CONFIG VÀ KHỞI TẠO FIREBASE
+    // -----------------------------------------------------------------
+    const firebaseConfig = {
+      apiKey: "AIzaSyCtuUEaAX3cMSAMJwzCkXTuScAz4oaUS-w",
+      authDomain: "monopolian-5b6a9.firebaseapp.com",
+      databaseURL: "https://monopolian-5b6a9-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "monopolian-5b6a9",
+      storageBucket: "monopolian-5b6a9.firebasestorage.app",
+      messagingSenderId: "381162782318",
+      appId: "1:381162782318:web:c03527d35e32d76f98707f"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // -----------------------------------------------------------------
+    // ĐỐI TƯỢNG VÀ BIẾN TOÀN CỤC TRONG GAME
+    // -----------------------------------------------------------------
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const COLORS = [
+      '#ff4444',
+      '#00c851',
+      '#33b5e5',
+      '#ffbb33',
+      '#aa66cc',
+      '#ff8800'
+    ];
+
+    let myId = "player_" + Math.random().toString(36).substr(2, 9);
+    let myName = "Player";
+    let myColor = COLORS[0];
+    let roomId = "";
+    let isHost = false;
+    let gameState = "menu";
+    let lastTime = 0; // Thêm khai báo định nghĩa biến thời gian để chạy gameLoop
+
+    // Bản đồ và Mạng lưới
+    const COLS = 10;
+    const ROWS = 10;
+    const CELL_SIZE = 80;
+    let mazeGrid = [];
+    let mazeWalls = [];
+
+    // Các thực thể đồng bộ
+    let players = {};
+    let bullets = {};
+    let powerups = {};
+    
+    // HỆ THỐNG HIỆU ỨNG TÂN TIẾN VÀ LẮNG NGHE SỰ KIỆN
+    let localExplosions = []; 
+    let localLasers = [];     
+    let processedEventIds = new Set(); 
+    
+    // CẤU TRÚC ĐỒNG BỘ THỜI GIAN VÀ RUNG MÀN HÌNH
+    let roomData = { gameStartAt: 0, timeLimit: 300 };
+    let serverTimeOffset = 0; 
+    let shakeTime = 0;        
+    let shakeIntensity = 0;   
+
+    let airstrikes = {};
+
+    // TRẠNG THÁI KHUNG CHAT LOCAL
+    let isChatOpen = false;
+    let hasUnreadChat = false;
+    let isChatInputFocused = false;
+    let messageCountAtJoin = -1; 
+
+    // Trạng thái điều khiển Local
+    let keys = {};
+    let mouse = { x: 0, y: 0 };
+    let isMobile = false;
+
+    // Joysticks ảo (Mobile)
+    let leftJoy = { active: false, startX: 0, startY: 0, curX: 0, curY: 0, angle: 0, force: 0 };
+    let rightJoy = { active: false, startX: 0, startY: 0, curX: 0, curY: 0, angle: 0, force: 0, isShooting: false };
+
+    // Giới hạn đạn & Powerups Local
+    let localBulletCount = 0;
+    let maxAmmo = 3;
+    let ammoRegenTimer = 0;
+    let shootCooldown = 0;
+
+    // Power-up stats của tôi
+    let myPowerup = null;
+    let myPowerupTime = 0;
+
+    // BIẾN QUẢN LÝ TIẾN TRÌNH HỒI SINH TRÁNH TRÙNG LẶP
+    let myRespawnTimerActive = false;
+
+    // Đồng bộ Network Throttling (20 lần/giây ~ 50ms)
+    let lastNetworkSync = 0;
+    const SYNC_INTERVAL = 50;
+
+    // -----------------------------------------------------------------
+    // QUY HOẠCH TOÀN BỘ HÀM CHỨC NĂNG DUY NHẤT KHÔNG TRÙNG LẶP
+    // -----------------------------------------------------------------
+
+    // Phát hiện thiết bị cảm ứng hoặc PC
+    function detectDevice() {
+      isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    }
+    detectDevice();
+
+    // Thiết kế bo góc an toàn thủ công phòng ngừa crash Canvas
+    function drawRoundRect(ctx, x, y, width, height, radius) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+
+    // Sinh cấu trúc lưới mê cung bằng thuật toán DFS
+    function generateMaze() {
+      let grid = [];
+      for (let r = 0; r < ROWS; r++) {
+        grid[r] = [];
+        for (let c = 0; c < COLS; c++) {
+          grid[r][c] = { r, c, visited: false, walls: { top: true, right: true, bottom: true, left: true } };
+        }
+      }
+
+      let stack = [];
+      let current = grid[0][0];
+      current.visited = true;
+      stack.push(current);
+
+      while (stack.length > 0) {
+        let neighbors = [];
+        let { r, c } = current;
+
+        if (r > 0 && !grid[r - 1][c].visited) neighbors.push({ cell: grid[r - 1][c], dir: 'top' });
+        if (r < ROWS - 1 && !grid[r + 1][c].visited) neighbors.push({ cell: grid[r + 1][c], dir: 'bottom' });
+        if (c > 0 && !grid[r][c - 1].visited) neighbors.push({ cell: grid[r][c - 1], dir: 'left' });
+        if (c < COLS - 1 && !grid[r][c + 1].visited) neighbors.push({ cell: grid[r][c + 1], dir: 'right' });
+
+        if (neighbors.length > 0) {
+          let nextObj = neighbors[Math.floor(Math.random() * neighbors.length)];
+          let next = nextObj.cell;
+          let dir = nextObj.dir;
+
+          if (dir === 'top') { current.walls.top = false; next.walls.bottom = false; }
+          else if (dir === 'bottom') { current.walls.bottom = false; next.walls.top = false; }
+          else if (dir === 'left') { current.walls.left = false; next.walls.right = false; }
+          else if (dir === 'right') { current.walls.right = false; next.walls.left = false; }
+
+          next.visited = true;
+          stack.push(current);
+          current = next;
+        } else {
+          current = stack.pop();
+        }
+      }
+
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (r > 0 && r < ROWS - 1 && c > 0 && c < COLS - 1) {
+            if (Math.random() < 0.25) {
+              let dirs = ['top', 'bottom', 'left', 'right'];
+              let d = dirs[Math.floor(Math.random() * 4)];
+              if (d === 'top') { grid[r][c].walls.top = false; grid[r - 1][c].walls.bottom = false; }
+              else if (d === 'bottom') { grid[r][c].walls.bottom = false; grid[r + 1][c].walls.top = false; }
+              else if (d === 'left') { grid[r][c].walls.left = false; grid[r][c - 1].walls.right = false; }
+              else if (d === 'right') { grid[r][c].walls.right = false; grid[r][c + 1].walls.left = false; }
+            }
+          }
+        }
+      }
+      return grid;
+    }
+
+    // [CẬP NHẬT - HÀM PHÂN TÍCH TƯỜNG CỰC KỲ AN TOÀN TRÁNH HOÀN TOÀN CRASH KHI GUEST KẾT NỐI CHƯA NHẬN ĐỦ LƯỚI]
+    function parseGridToWalls(grid) {
+      let segments = [];
+      if (!grid) return segments;
+      for (let r = 0; r < ROWS; r++) {
+        if (!grid[r]) continue; // Guard ngăn chặn chỉ mục rỗng
+        for (let c = 0; c < COLS; c++) {
+          let cell = grid[r][c];
+          if (!cell || !cell.walls) continue; // Guard ngăn chặn ô rỗng
+          let x = c * CELL_SIZE;
+          let y = r * CELL_SIZE;
+
+          if (cell.walls.top) segments.push({ x1: x, y1: y, x2: x + CELL_SIZE, y2: y });
+          if (cell.walls.bottom) segments.push({ x1: x, y1: y + CELL_SIZE, x2: x + CELL_SIZE, y2: y + CELL_SIZE });
+          if (cell.walls.left) segments.push({ x1: x, y1: y, x2: x, y2: y + CELL_SIZE });
+          if (cell.walls.right) segments.push({ x1: x + CELL_SIZE, y1: y, x2: x + CELL_SIZE, y2: y + CELL_SIZE });
+        }
+      }
+      return segments;
+    }
+
+    // Lấy tọa độ hồi sinh ngẫu nhiên tránh tường và kẹt xe tăng khác
+    function getRandomSpawnPos() {
+      let valid = false;
+      let rx = 400, ry = 400; 
+      let attempts = 0;
+      while (!valid && attempts < 100) {
+        attempts++;
+        let tx = Math.random() * (800 - 60) + 30;
+        let ty = Math.random() * (800 - 60) + 30;
+        let collision = false;
+
+        for (let wall of mazeWalls) {
+          if (!wall || typeof wall.x1 !== 'number') continue;
+          let closest = getClosestPointOnSegment(tx, ty, wall.x1, wall.y1, wall.x2, wall.y2);
+          if (Math.hypot(tx - closest.x, ty - closest.y) < 30) {
+            collision = true;
+            break;
+          }
+        }
+        if (collision) continue;
+
+        let tooClose = false;
+        for (let pId in players) {
+          let p = players[pId];
+          if (!p || pId === myId || p.dead) continue;
+          let px = p.x;
+          let py = p.y;
+          if (typeof px === 'number' && typeof py === 'number' && !isNaN(px) && !isNaN(py)) {
+            let dist = Math.hypot(px - tx, py - ty);
+            if (dist < 120) {
+              tooClose = true;
+              break;
+            }
+          }
+        }
+        if (tooClose) continue;
+
+        rx = tx;
+        ry = ty;
+        valid = true;
+      }
+      return { x: rx, y: ry };
+    }
+
+    // Tìm điểm gần nhất trên đoạn thẳng
+    function getClosestPointOnSegment(px, py, x1, y1, x2, y2) {
+      let dx = x2 - x1;
+      let dy = y2 - y1;
+      if (dx === 0 && dy === 0) return { x: x1, y: y1 };
+      let t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy);
+      t = Math.max(0, Math.min(1, t));
+      return { x: x1 + t * dx, y: y1 + t * dy };
+    }
+
+    // Xử lý trượt va chạm xe tăng khi chạm tường
+    function checkTankWallCollision(tank, radius) {
+      if (!tank || typeof tank.x !== 'number' || typeof tank.y !== 'number') return;
+      for (let wall of mazeWalls) {
+        if (!wall || typeof wall.x1 !== 'number') continue;
+        let closest = getClosestPointOnSegment(tank.x, tank.y, wall.x1, wall.y1, wall.x2, wall.y2);
+        let dx = tank.x - closest.x;
+        let dy = tank.y - closest.y;
+        let dist = Math.hypot(dx, dy);
+        if (dist < radius) {
+          if (dist === 0) {
+            dx = Math.random() - 0.5;
+            dy = Math.random() - 0.5;
+            dist = Math.hypot(dx, dy);
+          }
+          let overlap = radius - dist;
+          tank.x += (dx / dist) * overlap;
+          tank.y += (dy / dist) * overlap;
+        }
+      }
+    }
+
+    // Giao điểm hai đoạn thẳng
+    function lineIntersection(p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y) {
+      let s1x = p1x - p0x;
+      let s1y = p1y - p0y;
+      let s2x = p3x - p2x;
+      let s2y = p3y - p2y;
+
+      let s = (-s1y * (p0x - p2x) + s1x * (p0y - p2y)) / (-s2x * s1y + s1x * s2y);
+      let t = ( s2x * (p0y - p2y) - s2y * (p0x - p2x)) / (-s2x * s1y + s1x * s2y);
+
+      if (s >= 0 && s <= 1 && t >= 0 && t <= 1) {
+        return { x: p0x + (t * s1x), y: p0y + (t * s1y), t: t };
+      }
+      return null;
+    }
+
+    // Các sự kiện joysticks di động
+    function handleTouchStart(e) {
+      if (e.target.closest('#chat-wrapper')) return;
+
+      e.preventDefault();
+      let rect = canvas.getBoundingClientRect();
+      for (let t of e.touches) {
+        let tx = (t.clientX - rect.left) * (800 / rect.width);
+        let ty = (t.clientY - rect.top) * (800 / rect.height);
+
+        if (tx < 400 && !leftJoy.active) {
+          leftJoy.active = true;
+          leftJoy.startX = tx;
+          leftJoy.startY = ty;
+          leftJoy.curX = tx;
+          leftJoy.curY = ty;
+        }
+        else if (tx >= 400 && !rightJoy.active) {
+          rightJoy.active = true;
+          rightJoy.startX = tx;
+          rightJoy.startY = ty;
+          rightJoy.curX = tx;
+          rightJoy.curY = ty;
+          rightJoy.isShooting = true;
+        }
+      }
+    }
+
+    function handleTouchMove(e) {
+      if (e.target.closest('#chat-wrapper')) return;
+
+      e.preventDefault();
+      let rect = canvas.getBoundingClientRect();
+      for (let t of e.touches) {
+        let tx = (t.clientX - rect.left) * (800 / rect.width);
+        let ty = (t.clientY - rect.top) * (800 / rect.height);
+
+        if (leftJoy.active && tx < 400) {
+          leftJoy.curX = tx;
+          leftJoy.curY = ty;
+          let dx = tx - leftJoy.startX;
+          let dy = ty - leftJoy.startY;
+          leftJoy.angle = Math.atan2(dy, dx);
+          leftJoy.force = Math.min(1, Math.hypot(dx, dy) / 60);
+        }
+        if (rightJoy.active && tx >= 400) {
+          rightJoy.curX = tx;
+          rightJoy.curY = ty;
+          let dx = tx - rightJoy.startX;
+          let dy = ty - rightJoy.startY;
+          rightJoy.angle = Math.atan2(dy, dx);
+          rightJoy.force = Math.min(1, Math.hypot(dx, dy) / 60);
+        }
+      }
+    }
+
+    function handleTouchEnd(e) {
+      if (e.target.closest('#chat-wrapper')) return;
+
+      e.preventDefault();
+      let hasLeft = false;
+      let hasRight = false;
+      for (let t of e.touches) {
+        let rect = canvas.getBoundingClientRect();
+        let tx = (t.clientX - rect.left) * (800 / rect.width);
+        if (tx < 400) hasLeft = true;
+        if (tx >= 400) hasRight = true;
+      }
+      if (!hasLeft) { leftJoy.active = false; leftJoy.force = 0; }
+      if (!hasRight) { rightJoy.active = false; rightJoy.isShooting = false; }
+    }
+
+    // Bắn đạn lên Firebase
+    function shootBullet() {
+      if (shootCooldown > 0) return;
+      
+      let me = players[myId];
+      if (!me || me.dead) return;
+
+      let isRapid = (myPowerup === 'rapid' && Date.now() < myPowerupTime);
+      if (!isRapid && localBulletCount >= maxAmmo) return;
+
+      let bSpeed = 4.5;
+      let vx = Math.cos(me.turretAngle) * bSpeed;
+      let vy = Math.sin(me.turretAngle) * bSpeed;
+
+      let startX = me.x + Math.cos(me.turretAngle) * 25;
+      let startY = me.y + Math.sin(me.turretAngle) * 25;
+
+      let bId = "bullet_" + myId + "_" + Date.now();
+      let bType = myPowerup || 'normal';
+
+      if (bType === 'laser' && Date.now() < myPowerupTime) {
+        triggerLaser(startX, startY, me.turretAngle);
+        shootCooldown = 1.0; 
+        return;
+      }
+
+      if (bType === 'airstrike' && Date.now() < myPowerupTime) {
+        triggerAirstrike(startX, startY, me.turretAngle);
+        shootCooldown = 1.5;
+        myPowerup = null; 
+        update(ref(db, `tankGame/rooms/${roomId}/players/${myId}`), {
+          activePowerup: null,
+          powerupExpires: 0
+        });
+        return;
+      }
+
+      set(ref(db, `tankGame/rooms/${roomId}/bullets/${bId}`), {
+        id: bId,
+        ownerId: myId,
+        x: startX,
+        y: startY,
+        vx: vx,
+        vy: vy,
+        type: bType,
+        bounces: 0,
+        spawnedAt: Date.now()
+      });
+
+      if (!isRapid) {
+        localBulletCount++;
+      }
+      shootCooldown = isRapid ? 0.08 : 0.3; 
+    }
+
+    // Tia laser xuyên phá
+    function triggerLaser(sx, sy, angle) {
+      let length = 1500;
+      let ex = sx + Math.cos(angle) * length;
+      let ey = sy + Math.sin(angle) * length;
+
+      let eventId = "laser_" + Date.now();
+      set(ref(db, `tankGame/rooms/${roomId}/events/${eventId}`), {
+        type: 'laser',
+        sx, sy, ex, ey,
+        ownerId: myId,
+        timestamp: Date.now()
+      });
+
+      for (let pId in players) {
+        let p = players[pId];
+        if (!p || pId === myId || p.dead) continue;
+        let closest = getClosestPointOnSegment(p.x, p.y, sx, sy, ex, ey);
+        let dist = Math.hypot(p.x - closest.x, p.y - closest.y);
+        if (dist < 18) {
+          killPlayer(pId);
+        }
+      }
+    }
+
+    // Cảnh báo không kích
+    function triggerAirstrike(sx, sy, angle) {
+      let targetX = sx + Math.cos(angle) * 150;
+      let targetY = sy + Math.sin(angle) * 150;
+
+      targetX = Math.max(30, Math.min(770, targetX));
+      targetY = Math.max(30, Math.min(770, targetY));
+
+      let strikeId = "strike_" + Date.now();
+      set(ref(db, `tankGame/rooms/${roomId}/airstrikes/${strikeId}`), {
+        id: strikeId,
+        x: targetX,
+        y: targetY,
+        ownerId: myId,
+        createdAt: Date.now()
+      });
+    }
+
+    // Tiêu diệt mục tiêu và cập nhật điểm số
+    function killPlayer(targetId) {
+      if (!players[targetId] || players[targetId].shieldActive) return; 
+
+      runTransaction(ref(db, `tankGame/rooms/${roomId}/players/${myId}/score`), (currentScore) => {
+        return (currentScore || 0) + 1;
+      });
+
+      update(ref(db, `tankGame/rooms/${roomId}/players/${targetId}`), {
+        dead: true
+      });
+
+      runTransaction(ref(db, `tankGame/rooms/${roomId}/players/${targetId}/score`), (currentScore) => {
+        return (currentScore || 0) - 1;
+      });
+    }
+
+    // Nhập và đồng bộ phòng chơi
+    async function joinRoom() {
+      myName = document.getElementById('username-input').value.trim() || "User_" + Math.floor(Math.random()*100);
+      let rInput = document.getElementById('room-input').value.trim().toUpperCase();
+
+      if (!rInput) {
+        roomId = "ROOM_" + Math.random().toString(36).substr(2, 5).toUpperCase();
+        isHost = true;
+      } else {
+        roomId = rInput;
+        isHost = false;
+      }
+
+      document.getElementById('lobby-room-code').innerText = "MÃ PHÒNG: " + roomId;
+      document.getElementById('hud-room-id').innerText = roomId;
+
+      myColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+      let myData = {
+        id: myId,
+        name: myName,
+        color: myColor,
+        x: 400,
+        y: 400,
+        angle: 0,
+        turretAngle: 0,
+        score: 0,
+        dead: false,
+        shieldActive: true,
+        shieldTime: Date.now() + 2000,
+        lastActive: Date.now(),
+        activePowerup: null,
+        powerupExpires: 0
+      };
+
+      if (isHost) {
+        let grid = generateMaze();
+        mazeGrid = grid;
+        mazeWalls = parseGridToWalls(grid);
+
+        await set(ref(db, `tankGame/rooms/${roomId}`), {
+          state: 'lobby',
+          maze: grid,
+          timeLimit: 300,
+          gameStartAt: 0
+        });
+      } else {
+        onValue(ref(db, `tankGame/rooms/${roomId}/maze`), (snapshot) => {
+          if (snapshot.exists()) {
+            mazeGrid = snapshot.val();
+            mazeWalls = parseGridToWalls(mazeGrid);
+          }
+        });
+      }
+
+      await set(ref(db, `tankGame/rooms/${roomId}/players/${myId}`), myData);
+      onDisconnect(ref(db, `tankGame/rooms/${roomId}/players/${myId}`)).remove();
+
+      listenToRoom();
+
+      document.getElementById('chat-wrapper').classList.remove('hidden');
+
+      document.getElementById('main-screen').classList.add('hidden');
+      document.getElementById('lobby-screen').classList.remove('hidden');
+
+      if (isHost) {
+        document.getElementById('host-settings').classList.remove('hidden');
+        document.getElementById('btn-start').classList.remove('hidden');
+        document.getElementById('wait-host-msg').classList.add('hidden');
+      }
+    }
+
+    // Thiết lập các bộ lắng nghe gọn nhẹ đồng bộ từ Firebase
+    function listenToRoom() {
+      onValue(ref(db, `tankGame/rooms/${roomId}/state`), (snapshot) => {
+        let newState = snapshot.val() || 'lobby';
+        let oldStateTemp = gameState;
+        gameState = newState;
+
+        if (gameState === 'lobby') {
+          document.getElementById('lobby-screen').classList.remove('hidden');
+          document.getElementById('gameover-screen').classList.add('hidden');
+          document.getElementById('game-hud-wrapper').classList.add('hidden');
+        } else if (gameState === 'playing') {
+          document.getElementById('lobby-screen').classList.add('hidden');
+          document.getElementById('gameover-screen').classList.add('hidden');
+          document.getElementById('game-hud-wrapper').classList.remove('hidden');
+
+          if (oldStateTemp !== 'playing') {
+            let pos = getRandomSpawnPos();
+            update(ref(db, `tankGame/rooms/${roomId}/players/${myId}`), {
+              x: pos.x,
+              y: pos.y,
+              dead: false,
+              shieldActive: true,
+              shieldTime: Date.now() + 2000
+            });
+          }
+        } else if (gameState === 'gameover') {
+          showLeaderboard();
+          document.getElementById('game-hud-wrapper').classList.add('hidden');
+        }
+      });
+
+      onValue(ref(db, `tankGame/rooms/${roomId}/gameStartAt`), (snapshot) => {
+        roomData.gameStartAt = snapshot.val() || 0;
+      });
+
+      onValue(ref(db, `tankGame/rooms/${roomId}/timeLimit`), (snapshot) => {
+        roomData.timeLimit = snapshot.val() || 300;
+      });
+
+      onValue(ref(db, `tankGame/rooms/${roomId}/players`), (snapshot) => {
+        players = snapshot.val() || {};
+        updatePlayerLobbyList();
+        updateScoresHUD();
+
+        let me = players[myId];
+        if (me && me.dead && !myRespawnTimerActive) {
+          myRespawnTimerActive = true;
+          triggerLocalExplosion(me.x, me.y, 'strike');
+          
+          setTimeout(() => {
+            let pos = getRandomSpawnPos();
+            update(ref(db, `tankGame/rooms/${roomId}/players/${myId}`), {
+              x: pos.x,
+              y: pos.y,
+              dead: false,
+              shieldActive: true,
+              shieldTime: Date.now() + 2000, 
+              activePowerup: null,
+              powerupExpires: 0
+            });
+            myRespawnTimerActive = false;
+          }, 1500); 
+        }
+      });
+
+      onValue(ref(db, `tankGame/rooms/${roomId}/bullets`), (snapshot) => {
+        bullets = snapshot.val() || {};
+      });
+
+      onValue(ref(db, `tankGame/rooms/${roomId}/powerups`), (snapshot) => {
+        powerups = snapshot.val() || {};
+      });
+
+      onValue(ref(db, `tankGame/rooms/${roomId}/airstrikes`), (snapshot) => {
+        airstrikes = snapshot.val() || {};
+      });
+
+      onValue(ref(db, `tankGame/rooms/${roomId}/events`), (snapshot) => {
+        if (!snapshot.exists()) return;
+        let evts = snapshot.val();
+        for (let key in evts) {
+          if (processedEventIds.has(key)) continue;
+          processedEventIds.add(key);
+
+          let e = evts[key];
+          if (!e) continue; 
+          if (e.type === 'laser') {
+            localLasers.push({
+              sx: e.sx, sy: e.sy, ex: e.ex, ey: e.ey,
+              createdAt: Date.now(),
+              duration: 200
+            });
+            triggerLocalExplosion(e.ex, e.ey, 'laser');
+          }
+          else if (e.type === 'strike_boom') {
+            triggerLocalExplosion(e.x, e.y, 'strike');
+          }
+          else if (e.type === 'bullet_boom') {
+            triggerLocalExplosion(e.x, e.y, 'bullet');
+          }
+        }
+      });
+
+      onValue(ref(db, `tankGame/rooms/${roomId}/chat`), (snapshot) => {
+        let chatData = snapshot.val() || {};
+        let messagesDiv = document.getElementById('chat-messages');
+        messagesDiv.innerHTML = "";
+        
+        let sortedMessages = Object.values(chatData).sort((a, b) => a.timestamp - b.timestamp);
+        
+        sortedMessages.forEach(msg => {
+          if (!msg) return; 
+          let msgEl = document.createElement('div');
+          msgEl.className = "chat-msg";
+          msgEl.innerHTML = `<span class="chat-sender" style="color: ${msg.senderColor}">${msg.senderName}:</span> ${msg.message}`;
+          messagesDiv.appendChild(msgEl);
+        });
+        
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+        let messageKeys = Object.keys(chatData);
+        if (messageCountAtJoin === -1) {
+          messageCountAtJoin = messageKeys.length;
+        } else if (!isChatOpen && messageKeys.length > messageCountAtJoin) {
+          hasUnreadChat = true;
+          document.getElementById('chat-badge').classList.remove('hidden');
+        }
+      });
+    }
+
+    // Cập nhật giao diện phòng chờ Lobby
+    function updatePlayerLobbyList() {
+      let ul = document.getElementById('player-list-ul');
+      if (!ul) return;
+      ul.innerHTML = "";
+      for (let id in players) {
+        let p = players[id];
+        if (!p) continue; 
+        let li = document.createElement('li');
+        li.innerHTML = `<span style="color:${p.color}">■</span> ${p.name} <span>${p.id === myId ? '(Bạn)' : ''}</span>`;
+        ul.appendChild(li);
+      }
+    }
+
+    // Cập nhật bảng điểm Score Bar
+    function updateScoresHUD() {
+      let panel = document.getElementById('scores-panel');
+      if (!panel) return;
+      panel.innerHTML = "";
+      let sorted = Object.values(players).filter(p => p !== null).sort((a,b) => b.score - a.score);
+      for (let p of sorted) {
+        let card = document.createElement('div');
+        card.className = "score-card";
+        card.innerHTML = `
+          <div class="mini-tank-icon" style="background:${p.color}"></div>
+          <span>${p.name}: ${p.score}</span>
+        `;
+        panel.appendChild(card);
+      }
+    }
+
+    // Hiển thị bảng tổng xếp hạng khi Game Over
+    function showLeaderboard() {
+      document.getElementById('gameover-screen').classList.remove('hidden');
+      let div = document.getElementById('leaderboard-list');
+      if (!div) return;
+      div.innerHTML = "";
+      let sorted = Object.values(players).filter(p => p !== null).sort((a,b) => b.score - a.score);
+      sorted.forEach((p, idx) => {
+        let item = document.createElement('div');
+        item.className = "leaderboard-item";
+        item.innerHTML = `<span>#${idx+1} <b style="color:${p.color}">${p.name}</b></span> <span>${p.score} Điểm</span>`;
+        div.appendChild(item);
+      });
+    }
+
+    // Thêm biên độ rung màn hình
+    function addScreenShake(duration, intensity) {
+      shakeTime = duration;
+      shakeIntensity = intensity;
+    }
+
+    // Khấu hao thời gian rung màn hình theo chu kỳ tick dt
+    function updateScreenShake(dt) {
+      if (shakeTime > 0) {
+        shakeTime -= dt;
+        if (shakeTime < 0) {
+          shakeTime = 0;
+          shakeIntensity = 0;
+        }
+      }
+    }
+
+    // Tạo hiệu ứng hạt nổ đa tầng
+    function triggerLocalExplosion(x, y, type) {
+      let me = players[myId];
+      if (me && !me.dead) {
+        let dist = Math.hypot(me.x - x, me.y - y);
+        let maxDist = 600; 
+        if (dist < maxDist) {
+          let factor = 1 - (dist / maxDist);
+          let intensity = factor * 14; 
+          addScreenShake(0.3, intensity);
+        }
+      }
+
+      let explosion = {
+        id: Math.random(),
+        x: x,
+        y: y,
+        startTime: Date.now(),
+        duration: 500, 
+        flashMaxRadius: type === 'strike' ? 70 : (type === 'laser' ? 25 : 35),
+        shockwaveMaxRadius: type === 'strike' ? 100 : (type === 'laser' ? 40 : 55),
+        particles: [],
+        smoke: []
+      };
+
+      let particleCount = type === 'strike' ? 35 : 12;
+      for (let i = 0; i < particleCount; i++) {
+        let angle = Math.random() * Math.PI * 2;
+        let speed = Math.random() * 130 + 40;
+        explosion.particles.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: Math.random() * 4 + 2,
+          color: Math.random() < 0.35 ? '#ffffff' : (Math.random() < 0.7 ? '#ffcc00' : '#ff3300'),
+          alpha: 1,
+          life: 350 + Math.random() * 200 
+        });
+      }
+
+      let smokeCount = type === 'strike' ? 12 : 5;
+      for (let i = 0; i < smokeCount; i++) {
+        let angle = Math.random() * Math.PI * 2;
+        let speed = Math.random() * 25 + 10;
+        explosion.smoke.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 20, 
+          size: Math.random() * 12 + 6,
+          alpha: 0.7,
+          life: 600 + Math.random() * 400 
+        });
+      }
+
+      localExplosions.push(explosion);
+    }
+
+    // Vẽ hạt nổ cục bộ của ván đấu
+    function drawExplosions() {
+      let now = Date.now();
+      for (let i = localExplosions.length - 1; i >= 0; i--) {
+        let exp = localExplosions[i];
+        if (!exp) continue; 
+        let elapsed = now - exp.startTime;
+        let progress = elapsed / exp.duration;
+
+        if (progress >= 1) {
+          let hasActiveP = exp.particles.some(p => elapsed < p.life);
+          let hasActiveS = exp.smoke.some(s => elapsed < s.life);
+          if (!hasActiveP && !hasActiveS) {
+            localExplosions.splice(i, 1);
+            continue;
+          }
+        }
+
+        if (progress < 0.6) {
+          let fProg = progress / 0.6;
+          let r = exp.flashMaxRadius * Math.sin(fProg * Math.PI / 2);
+          let alpha = 1 - fProg;
+          let grad = ctx.createRadialGradient(exp.x, exp.y, 0, exp.x, exp.y, r);
+          grad.addColorStop(0, `rgba(255, 255, 255, ${alpha})`); 
+          grad.addColorStop(0.3, `rgba(255, 200, 0, ${alpha * 0.9})`);
+          grad.addColorStop(0.8, `rgba(255, 60, 0, ${alpha * 0.4})`); 
+          grad.addColorStop(1, 'rgba(255, 60, 0, 0)');
+          
+          ctx.save();
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(exp.x, exp.y, r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        if (progress < 0.8) {
+          let swProg = progress / 0.8;
+          let r = exp.shockwaveMaxRadius * swProg;
+          let alpha = 1 - swProg;
+          ctx.save();
+          ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.65})`;
+          ctx.lineWidth = 4 * (1 - swProg);
+          ctx.beginPath();
+          ctx.arc(exp.x, exp.y, r, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        for (let p of exp.particles) {
+          if (elapsed > p.life) continue;
+          let pProg = elapsed / p.life;
+          let px = p.x + p.vx * (elapsed / 1000);
+          let py = p.y + p.vy * (elapsed / 1000);
+          let alpha = 1 - pProg;
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(px, py, p.size * (1 - pProg * 0.4), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        for (let s of exp.smoke) {
+          if (elapsed > s.life) continue;
+          let sProg = elapsed / s.life;
+          let sx = s.x + s.vx * (elapsed / 1000);
+          let sy = s.y + s.vy * (elapsed / 1000);
+          let alpha = s.alpha * (1 - sProg);
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = '#666666';
+          ctx.beginPath();
+          ctx.arc(sx, sy, s.size * (1 + sProg * 0.7), 0, Math.PI * 2); 
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+    }
+
+    // Vẽ tia chớp Laser
+    function drawLasers() {
+      let now = Date.now();
+      for (let i = localLasers.length - 1; i >= 0; i--) {
+        let laser = localLasers[i];
+        if (!laser) continue; 
+        let elapsed = now - laser.createdAt;
+        if (elapsed > laser.duration) {
+          localLasers.splice(i, 1);
+          continue;
+        }
+        let alpha = 1 - (elapsed / laser.duration);
+        ctx.save();
+        ctx.strokeStyle = `rgba(255, 0, 255, ${alpha})`;
+        ctx.lineWidth = 6 * alpha;
+        ctx.shadowColor = '#ff00ff';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.moveTo(laser.sx, laser.sy);
+        ctx.lineTo(laser.ex, laser.ey);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // VÒNG LẶP CHÍNH (GAME LOOP)
+    function gameLoop(timestamp) {
+      // Đặt requestAnimationFrame lên đầu đảm bảo tính tự khôi phục luồng vẽ (Self-Healing Loop)
+      requestAnimationFrame(gameLoop);
+
+      if (!lastTime) lastTime = timestamp;
+      let dt = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      updateScreenShake(dt);
+
+      ctx.save();
+      if (shakeTime > 0) {
+        let currentIntensity = shakeIntensity * (shakeTime / 0.3); 
+        let dx = (Math.random() - 0.5) * currentIntensity;
+        let dy = (Math.random() - 0.5) * currentIntensity;
+        ctx.translate(dx, dy);
+      }
+
+      try {
+        if (gameState === "playing") {
+          updateMyTank(dt);
+          updateLocalAirstrikes();
+          updateLocalBulletsPhysics();
+          drawMaze();
+          drawAirstrikes();
+          drawPowerups();
+          drawTanks();
+          drawLasers(); 
+          drawBullets();
+          drawExplosions(); 
+          updateTimerUI(); 
+        } else {
+          ctx.fillStyle = '#222';
+          ctx.fillRect(0,0,800,800);
+        }
+      } catch (err) {
+        console.error("Vòng lặp đồ họa bắt gặp lỗi không nghiêm trọng:", err);
+      }
+
+      ctx.restore(); 
+    }
+
+    // Cập nhật vị trí và góc súng xe tăng của bản thân
+    function updateMyTank(dt) {
+      let me = players[myId];
+      if (!me || me.dead) return;
+
+      if (isChatInputFocused) return;
+
+      if (typeof me.x !== 'number' || typeof me.y !== 'number' || isNaN(me.x) || isNaN(me.y)) {
+        me.x = 400;
+        me.y = 400;
+      }
+
+      let speed = (myPowerup === 'speed' && Date.now() < myPowerupTime) ? 170 : 110;
+      let moveX = 0;
+      let moveY = 0;
+
+      if (keys['w'] || keys['arrowup']) moveY = -1;
+      if (keys['s'] || keys['arrowdown']) moveY = 1;
+      if (keys['a'] || keys['arrowleft']) moveX = -1;
+      if (keys['d'] || keys['arrowright']) moveX = 1;
+
+      if (moveX !== 0 && moveY !== 0) {
+        let length = Math.hypot(moveX, moveY);
+        moveX /= length;
+        moveY /= length;
+      }
+
+      if (isMobile && leftJoy.active) {
+        moveX = Math.cos(leftJoy.angle) * leftJoy.force;
+        moveY = Math.sin(leftJoy.angle) * leftJoy.force;
+      }
+
+      me.x += moveX * speed * dt;
+      me.y += moveY * speed * dt;
+
+      me.x = Math.max(15, Math.min(785, me.x));
+      me.y = Math.max(15, Math.min(785, me.y));
+
+      checkTankWallCollision(me, 15);
+
+      if (moveX !== 0 || moveY !== 0) {
+        me.angle = Math.atan2(moveY, moveX);
+      }
+
+      if (isMobile) {
+        if (rightJoy.active) {
+          me.turretAngle = rightJoy.angle;
+          if (rightJoy.isShooting) {
+            shootBullet();
+          }
+        }
+      } else {
+        let dx = mouse.x - me.x;
+        let dy = mouse.y - me.y;
+        me.turretAngle = Math.atan2(dy, dx);
+      }
+
+      let isCurrentlyShielded = (Date.now() < me.shieldTime) || (myPowerup === 'shield' && Date.now() < myPowerupTime);
+      me.shieldActive = isCurrentlyShielded;
+
+      if (myPowerup && Date.now() > myPowerupTime) {
+        myPowerup = null;
+        myPowerupTime = 0;
+        update(ref(db, `tankGame/rooms/${roomId}/players/${myId}`), {
+          activePowerup: null,
+          powerupExpires: 0
+        });
+      }
+
+      for (let pId in powerups) {
+        let p = powerups[pId];
+        if (!p) continue; 
+        if (Math.hypot(me.x - p.x, me.y - p.y) < 25) {
+          applyPowerup(p.type);
+          remove(ref(db, `tankGame/rooms/${roomId}/powerups/${pId}`));
+        }
+      }
+
+      if (Date.now() - lastNetworkSync > SYNC_INTERVAL) {
+        update(ref(db, `tankGame/rooms/${roomId}/players/${myId}`), {
+          x: me.x,
+          y: me.y,
+          angle: me.angle,
+          turretAngle: me.turretAngle,
+          shieldActive: me.shieldActive
+        });
+        lastNetworkSync = Date.now();
+      }
+    }
+
+    // Gán bùa lợi powerup lên xe tăng của tôi
+    function applyPowerup(type) {
+      myPowerup = type;
+      let duration = (type === 'speed') ? 7000 : (type === 'laser' ? 10000 : 5000);
+      myPowerupTime = Date.now() + duration;
+
+      let isShield = (type === 'shield');
+      update(ref(db, `tankGame/rooms/${roomId}/players/${myId}`), {
+        activePowerup: type,
+        powerupExpires: myPowerupTime,
+        shieldActive: isShield ? true : (players[myId].shieldActive || false),
+        shieldTime: isShield ? myPowerupTime : (players[myId].shieldTime || 0)
+      });
+    }
+
+    // Xử lý nảy tường và va chạm đạn
+    function updateLocalBulletsPhysics() {
+      if (localBulletCount > 0) {
+        ammoRegenTimer += 16.67;
+        if (ammoRegenTimer >= 1200) {
+          localBulletCount = Math.max(0, localBulletCount - 1);
+          ammoRegenTimer = 0;
+        }
+      }
+      if (shootCooldown > 0) {
+        shootCooldown -= 0.0167;
+      }
+
+      for (let bId in bullets) {
+        let b = bullets[bId];
+        if (!b) continue; 
+        if (b.ownerId !== myId) continue;
+
+        let nextX = b.x + b.vx;
+        let nextY = b.y + b.vy;
+        let bounced = false;
+
+        if (b.type === 'homing') {
+          let target = null;
+          let minDist = Infinity;
+          for (let pId in players) {
+            let p = players[pId];
+            if (!p || pId === myId || p.dead) continue;
+            let dist = Math.hypot(p.x - b.x, p.y - b.y);
+            if (dist < minDist) {
+              minDist = dist;
+              target = p;
+            }
+          }
+          if (target) {
+            let angleToTarget = Math.atan2(target.y - b.y, target.x - b.x);
+            let currentAngle = Math.atan2(b.vy, b.vx);
+            let diff = angleToTarget - currentAngle;
+            diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+            let steerRate = 0.09; 
+            let newAngle = currentAngle + Math.max(-steerRate, Math.min(steerRate, diff));
+            let speed = Math.hypot(b.vx, b.vy);
+            b.vx = Math.cos(newAngle) * speed;
+            b.vy = Math.sin(newAngle) * speed;
+          }
+        }
+
+        if (b.type !== 'homing') {
+          for (let wall of mazeWalls) {
+            if (!wall || typeof wall.x1 !== 'number') continue;
+            let intersect = lineIntersection(b.x, b.y, nextX, nextY, wall.x1, wall.y1, wall.x2, wall.y2);
+            if (intersect) {
+              let isVertical = (wall.x1 === wall.x2);
+              if (isVertical) {
+                b.vx = -b.vx;
+              } else {
+                b.vy = -b.vy;
+              }
+              b.x = intersect.x + b.vx * 0.1;
+              b.y = intersect.y + b.vy * 0.1;
+              b.bounces = (b.bounces || 0) + 1;
+              bounced = true;
+              
+              if (b.bounces >= 3) {
+                explodeBullet(bId, b.x, b.y);
+              } else {
+                update(ref(db, `tankGame/rooms/${roomId}/bullets/${bId}`), {
+                  x: b.x, y: b.y, vx: b.vx, vy: b.vy, bounces: b.bounces
+                });
+              }
+              break;
+            }
+          }
+        }
+
+        if (!bounced) {
+          b.x = nextX;
+          b.y = nextY;
+          if (b.type === 'homing' && Date.now() - b.spawnedAt > 5000) {
+            explodeBullet(bId, b.x, b.y);
+          } else {
+            update(ref(db, `tankGame/rooms/${roomId}/bullets/${bId}`), { x: b.x, y: b.y });
+          }
+        }
+
+        for (let pId in players) {
+          let p = players[pId];
+          if (!p || p.dead) continue;
+          let dist = Math.hypot(p.x - b.x, p.y - b.y);
+          if (dist < 18) {
+            explodeBullet(bId, b.x, b.y);
+            killPlayer(pId);
+            break;
+          }
+        }
+      }
+    }
+
+    // Không kích rơi bom và sinh Power-ups của Host
+    function updateLocalAirstrikes() {
+      if (!isHost) return;
+      for (let sId in airstrikes) {
+        let s = airstrikes[sId];
+        if (!s) continue; 
+        if (Date.now() - s.createdAt > 3000) { 
+          let eventId = "boom_strike_" + Date.now();
+          set(ref(db, `tankGame/rooms/${roomId}/events/${eventId}`), {
+            type: 'strike_boom',
+            x: s.x, y: s.y,
+            timestamp: Date.now()
+          });
+
+          for (let pId in players) {
+            let p = players[pId];
+            if (!p || pId === myId || p.dead) continue;
+            let dist = Math.hypot(p.x - s.x, p.y - s.y);
+            if (dist < 60) {
+              killPlayer(pId);
+            }
+          }
+
+          remove(ref(db, `tankGame/rooms/${roomId}/airstrikes/${sId}`));
+          setTimeout(() => {
+            remove(ref(db, `tankGame/rooms/${roomId}/events/${eventId}`));
+          }, 1000);
+        }
+      }
+
+      if (Math.random() < 0.005 && Object.keys(powerups).length < 8) {
+        let pId = "pwr_" + Date.now();
+        let types = ['shield', 'rapid', 'laser', 'airstrike', 'speed', 'homing'];
+        let randType = types[Math.floor(Math.random() * types.length)];
+        let pos = getRandomSpawnPos();
+        set(ref(db, `tankGame/rooms/${roomId}/powerups/${pId}`), {
+          id: pId,
+          x: pos.x,
+          y: pos.y,
+          type: randType,
+          spawnedAt: Date.now()
+        });
+      }
+
+      for (let pId in powerups) {
+        let p = powerups[pId];
+        if (p && Date.now() - p.spawnedAt > 10000) {
+          remove(ref(db, `tankGame/rooms/${roomId}/powerups/${pId}`));
+        }
+      }
+    }
+
+    // Đồng bộ tin nhắn gửi đi
+    function sendChatMessage() {
+      let input = document.getElementById('chat-input');
+      let text = input.value.trim();
+      if (!text) return;
+      if (text.length > 200) text = text.substr(0, 200);
+
+      let chatRef = push(ref(db, `tankGame/rooms/${roomId}/chat`));
+      set(chatRef, {
+        senderName: myName,
+        senderColor: myColor,
+        message: text,
+        timestamp: Date.now()
+      });
+      input.value = "";
+    }
+
+    // Đóng mở khung chat
+    function toggleChat(forceOpen = null) {
+      let chatBox = document.getElementById('chat-box');
+      let badge = document.getElementById('chat-badge');
+      
+      if (forceOpen !== null) {
+        isChatOpen = forceOpen;
+      } else {
+        isChatOpen = !isChatOpen;
+      }
+
+      if (isChatOpen) {
+        chatBox.classList.remove('hidden');
+        document.getElementById('chat-input').focus();
+        hasUnreadChat = false;
+        badge.classList.add('hidden');
+      } else {
+        chatBox.classList.add('hidden');
+        document.getElementById('chat-input').blur();
+      }
+    }
+
+    // Gán các sự kiện clicks cho chat
+    document.getElementById('btn-chat-toggle').addEventListener('click', () => toggleChat());
+    document.getElementById('btn-chat-send').addEventListener('click', sendChatMessage);
+
+    document.getElementById('chat-input').addEventListener('focus', () => {
+      isChatInputFocused = true;
+      keys = {}; 
+    });
+    document.getElementById('chat-input').addEventListener('blur', () => {
+      isChatInputFocused = false;
+    });
+
+    // -----------------------------------------------------------------
+    // GẮN SỰ KIỆN KHỞI ĐỘNG GHÉP TRẬN CHO NÚT BẤM
+    // -----------------------------------------------------------------
+    document.getElementById('btn-join').addEventListener('click', joinRoom);
+
+    document.getElementById('btn-start').addEventListener('click', () => {
+      if (!isHost) return;
+      let limit = parseInt(document.getElementById('time-limit-select').value);
+      update(ref(db, `tankGame/rooms/${roomId}`), {
+        state: 'playing',
+        timeLimit: limit,
+        gameStartAt: Date.now() + serverTimeOffset 
+      });
+    });
+
+    document.getElementById('btn-rematch').addEventListener('click', () => {
+      if (isHost) {
+        let grid = generateMaze();
+        mazeGrid = grid;
+        mazeWalls = parseGridToWalls(grid);
+
+        update(ref(db, `tankGame/rooms/${roomId}`), {
+          state: 'lobby',
+          maze: grid,
+          gameStartAt: 0
+        });
+      } else {
+        document.getElementById('gameover-screen').classList.add('hidden');
+        document.getElementById('lobby-screen').classList.remove('hidden');
+      }
+    });
+
+    // -----------------------------------------------------------------
+    // CÁC HÀM VẼ CANVAS CHUYÊN BIỆT (KHAI BÁO DUY NHẤT 1 LẦN)
+    // -----------------------------------------------------------------
+    
+    // Vẽ lưới mê cung (Mới bổ sung để khắc phục lỗi không hiển thị tường)
+    function drawMaze() {
+      ctx.save();
+      ctx.strokeStyle = '#444444';
+      ctx.lineWidth = 6;
+      ctx.lineCap = 'round';
+      for (let wall of mazeWalls) {
+        if (!wall || typeof wall.x1 !== 'number') continue;
+        ctx.beginPath();
+        ctx.moveTo(wall.x1, wall.y1);
+        ctx.lineTo(wall.x2, wall.y2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // Cập nhật giao diện đếm thời gian trận đấu (Mới bổ sung để tránh lỗi vòng lặp)
+    function updateTimerUI() {
+      let timerEl = document.getElementById('timer');
+      if (!timerEl) return;
+      if (roomData.gameStartAt === 0) {
+        timerEl.innerText = "00:00";
+        return;
+      }
+      let now = Date.now() + serverTimeOffset;
+      let elapsed = Math.floor((now - roomData.gameStartAt) / 1000);
+      let remaining = roomData.timeLimit - elapsed;
+      if (remaining < 0) {
+        remaining = 0;
+        if (isHost && gameState === 'playing') {
+          update(ref(db, `tankGame/rooms/${roomId}`), {
+            state: 'gameover'
+          });
+        }
+      }
+      let m = Math.floor(remaining / 60);
+      let s = remaining % 60;
+      timerEl.innerText = (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+    }
+
+    // Tạo hiệu ứng nổ và đồng bộ hủy đạn khi va chạm (Mới bổ sung)
+    function explodeBullet(bId, x, y) {
+      remove(ref(db, `tankGame/rooms/${roomId}/bullets/${bId}`));
+      
+      let eventId = "boom_bullet_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4);
+      set(ref(db, `tankGame/rooms/${roomId}/events/${eventId}`), {
+        type: 'bullet_boom',
+        x: x,
+        y: y,
+        timestamp: Date.now()
+      });
+
+      if (isHost) {
+        setTimeout(() => {
+          remove(ref(db, `tankGame/rooms/${roomId}/events/${eventId}`));
+        }, 1000);
+      }
+    }
+
+    // Vẽ xe tăng người chơi
+    function drawTanks() {
+      for (let id in players) {
+        let p = players[id];
+        if (!p || p.dead) continue;
+
+        if (typeof p.x !== 'number' || typeof p.y !== 'number' || isNaN(p.x) || isNaN(p.y)) {
+          continue; 
+        }
+
+        let tankAngle = (typeof p.angle === 'number' && !isNaN(p.angle)) ? p.angle : 0;
+        let turretAngle = (typeof p.turretAngle === 'number' && !isNaN(p.turretAngle)) ? p.turretAngle : 0;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+
+        if (p.shieldActive) {
+          ctx.beginPath();
+          ctx.arc(0, 0, 24, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(0, 191, 255, ' + (0.5 + Math.sin(Date.now() / 100) * 0.3) + ')';
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        }
+
+        ctx.save();
+        ctx.rotate(tankAngle);
+        ctx.fillStyle = '#555';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.fillRect(-16, -15, 32, 6);
+        ctx.strokeRect(-16, -15, 32, 6);
+        ctx.fillRect(-16, 9, 32, 6);
+        ctx.strokeRect(-16, 9, 32, 6);
+
+        ctx.fillStyle = p.color || '#999';
+        drawRoundRect(ctx, -12, -10, 24, 20, 4);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.save();
+        ctx.rotate(turretAngle);
+        ctx.fillStyle = p.color || '#999';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.fillRect(0, -3, 25, 6);
+        ctx.strokeRect(0, -3, 25, 6);
+        ctx.beginPath();
+        ctx.arc(0, 0, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.restore();
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 11px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(p.name || 'Player', p.x, p.y - 25);
+
+        if (p.activePowerup && Date.now() < p.powerupExpires) {
+          ctx.save();
+          ctx.translate(p.x, p.y - 38);
+          ctx.beginPath();
+          ctx.arc(0, 0, 8, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 1;
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#ff3300';
+          ctx.font = 'bold 9px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          let letter = 'P';
+          if (p.activePowerup === 'shield') { letter = 'S'; ctx.fillStyle = '#0099ff'; }
+          else if (p.activePowerup === 'rapid') { letter = 'R'; ctx.fillStyle = '#ffaa00'; }
+          else if (p.activePowerup === 'laser') { letter = 'L'; ctx.fillStyle = '#cc00cc'; }
+          else if (p.activePowerup === 'airstrike') { letter = 'A'; ctx.fillStyle = '#ff1100'; }
+          else if (p.activePowerup === 'speed') { letter = 'V'; ctx.fillStyle = '#00cc66'; }
+          else if (p.activePowerup === 'homing') { letter = 'H'; ctx.fillStyle = '#8833ff'; }
+          ctx.fillText(letter, 0, 0);
+          ctx.restore();
+        }
+      }
+    }
+
+    // Vẽ các hộp tiếp tế power-up
+    function drawPowerups() {
+      for (let pId in powerups) {
+        let p = powerups[pId];
+        if (!p) continue; 
+        if (typeof p.x !== 'number' || typeof p.y !== 'number' || isNaN(p.x) || isNaN(p.y)) {
+          continue; 
+        }
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+
+        ctx.beginPath();
+        ctx.moveTo(0, -14);
+        ctx.lineTo(14, 0);
+        ctx.lineTo(0, 14);
+        ctx.lineTo(-14, 0);
+        ctx.closePath();
+        ctx.fillStyle = '#dddddd';
+        ctx.strokeStyle = '#333333';
+        ctx.lineWidth = 2;
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#ff3300';
+        ctx.font = 'bold 10px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        let text = 'P';
+        if (p.type === 'shield') { text = 'S'; ctx.fillStyle = '#0099ff'; }
+        if (p.type === 'rapid') { text = 'R'; ctx.fillStyle = '#ffaa00'; }
+        if (p.type === 'laser') { text = 'L'; ctx.fillStyle = '#cc00cc'; }
+        if (p.type === 'airstrike') { text = 'A'; ctx.fillStyle = '#ff1100'; }
+        if (p.type === 'speed') { text = 'V'; ctx.fillStyle = '#00cc66'; }
+        if (p.type === 'homing') { text = 'H'; ctx.fillStyle = '#8833ff'; }
+        ctx.fillText(text, 0, 0);
+
+        ctx.restore();
+      }
+    }
+
+    // Vẽ đạn đang chuyển động
+    function drawBullets() {
+      for (let bId in bullets) {
+        let b = bullets[bId];
+        if (!b) continue; 
+        ctx.save();
+        ctx.translate(b.x, b.y);
+
+        if (b.type === 'homing') {
+          ctx.fillStyle = '#ff4400';
+          ctx.beginPath();
+          ctx.arc(0, 0, 5, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (b.type === 'rapid') {
+          ctx.fillStyle = '#ffff00';
+          ctx.beginPath();
+          ctx.arc(0, 0, 3, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillStyle = '#111';
+          ctx.beginPath();
+          ctx.arc(0, 0, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
+    // Vẽ bia cảnh báo bom rơi
+    function drawAirstrikes() {
+      for (let sId in airstrikes) {
+        let s = airstrikes[sId];
+        if (!s) continue; 
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, 60, 0, Math.PI*2);
+        ctx.strokeStyle = 'rgba(255, 0, 0, ' + (0.3 + Math.sin(Date.now() / 80) * 0.3) + ')';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255, 0, 255, 0.2)';
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // Khởi động vòng lặp game loop chính thức của hệ thống tự khôi phục
+    requestAnimationFrame(gameLoop);
+
+    // -----------------------------------------------------------------
+    // ĐĂNG KÝ CÁC SỰ KIỆN ĐIỀU KHIỂN (BÀN PHÍM, CHUỘT VÀ CẢM ỨNG)
+    // -----------------------------------------------------------------
+    window.addEventListener('keydown', (e) => {
+      if (isChatInputFocused) return;
+      keys[e.key.toLowerCase()] = true;
+      if (e.key === ' ' || e.key === 'Spacebar') {
+        shootBullet();
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      keys[e.key.toLowerCase()] = false;
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      let rect = canvas.getBoundingClientRect();
+      mouse.x = (e.clientX - rect.left) * (800 / rect.width);
+      mouse.y = (e.clientY - rect.top) * (800 / rect.height);
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+      if (isChatInputFocused) return;
+      if (e.button === 0) { // Chuột trái
+        shootBullet();
+      }
+    });
+
+    // Đăng ký Touch Events cho thiết bị di động
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+    // Đồng bộ sai lệch thời gian với máy chủ Firebase
+    onValue(ref(db, ".info/serverTimeOffset"), (snapshot) => {
+      serverTimeOffset = snapshot.val() || 0;
+    });
+
+  </script>
+</body>
+</html>
